@@ -226,7 +226,10 @@ int main(int argc, char* argv[]) {
                 } else {
                     s = strLost + strAgain;
                 }
-                msgBox->displayMultilineMessage(renderer, s, width / 4, height / 4, width / 2, height / 3);
+
+                int x = width / 6;
+                int w = width - x * 2;
+                msgBox->displayMultilineMessage(renderer, s, x, height / 4, w, height / 3);
                 gameState = eDoMenu;
                 break;
             }
@@ -961,97 +964,93 @@ char GetKeyboardChar()
     return c;
 } // GetKeyboardChar
 
-/****************************************************************************
-* Summary: Update all game objects.
-****************************************************************************/
-void UpdateGame()
-{
+void move_bullets() {
     const int moveCnt = 6;
-    char s[20];
-    //bool done;
-
     // Move bullets
-    bulletList.end();
-    for(int i = bulletList.size()-1; i>=0 ; i--)
-    {
-        std::shared_ptr<TItemRec> brPtr(bulletList[i]);
+    for (auto it = bulletList.begin(); it != bulletList.end();) {
+        std::shared_ptr<TItemRec> brPtr = *it;
         // track the distance the bullet moved
         brPtr->dist = brPtr->dist + moveCnt;
-        bool bullet_done =false;
-        switch(brPtr->directionIdx)
-        {
-            case 0:   // Up
-                if((brPtr->y - moveCnt) > 1)
+        bool bullet_done = false;
+        switch (brPtr->directionIdx) {
+            case 0: // Up
+                if ((brPtr->y - moveCnt) > 1)
                     brPtr->y = brPtr->y - moveCnt;
                 else
                     bullet_done = true;
                 break;
-            case 1:  // Up / right
-                if((brPtr->y - moveCnt) > 1)
+            case 1: // Up / right
+                if ((brPtr->y - moveCnt) > 1)
                     brPtr->y = brPtr->y - moveCnt;
                 else
                     bullet_done = true;
-                if((brPtr->x + moveCnt) < width)
+                if ((brPtr->x + moveCnt) < width)
                     brPtr->x = brPtr->x + moveCnt;
                 else
                     bullet_done = true;
                 break;
-            case 2:  // right
-                if((brPtr->x + moveCnt) < width)
+            case 2: // right
+                if ((brPtr->x + moveCnt) < width)
                     brPtr->x = brPtr->x + moveCnt;
                 else
                     bullet_done = true;
                 break;
-            case 3:  // down / right
-                if((brPtr->y + moveCnt) < height)
+            case 3: // down / right
+                if ((brPtr->y + moveCnt) < height)
                     brPtr->y = brPtr->y + moveCnt;
                 else
                     bullet_done = true;
-                if((brPtr->x + moveCnt) < width)
+                if ((brPtr->x + moveCnt) < width)
                     brPtr->x = brPtr->x + moveCnt;
                 else
                     bullet_done = true;
                 break;
-            case 4:  // Down
-                if((brPtr->y + moveCnt) < height)
+            case 4: // Down
+                if ((brPtr->y + moveCnt) < height)
                     brPtr->y = brPtr->y + moveCnt;
                 else
                     bullet_done = true;
                 break;
-            case 5:  // Down / left
-                if((brPtr->y + moveCnt) < height)
+            case 5: // Down / left
+                if ((brPtr->y + moveCnt) < height)
                     brPtr->y = brPtr->y + moveCnt;
                 else
                     bullet_done = true;
-                if((brPtr->x - moveCnt) > 1)
+                if ((brPtr->x - moveCnt) > 1)
                     brPtr->x = brPtr->x - moveCnt;
                 else
                     bullet_done = true;
                 break;
-            case 6:  // Left
-                if((brPtr->x - moveCnt) > 1)
+            case 6: // Left
+                if ((brPtr->x - moveCnt) > 1)
                     brPtr->x = brPtr->x - moveCnt;
                 else
                     bullet_done = true;
                 break;
-            case 7:  // Up / Left
-                if((brPtr->y - moveCnt) > 1)
+            case 7: // Up / Left
+                if ((brPtr->y - moveCnt) > 1)
                     brPtr->y = brPtr->y - moveCnt;
                 else
                     bullet_done = true;
-                if((brPtr->x - moveCnt) > 1)
+                if ((brPtr->x - moveCnt) > 1)
                     brPtr->x = brPtr->x - moveCnt;
                 else
                     bullet_done = true;
+                break;
+            default:
                 break;
         } // end switch
-        if(bullet_done)
-        {
-            bulletList.erase (bulletList.begin()+i);
+        if (bullet_done) {
+            it = bulletList.erase(it);
+        } else {
+            ++it;
         }
-    } // next i
+    } // next bullet
+}
+
+void animate_explosions() {
     // Animate explosions
-    for(int i = explosionList.size()-1; i>=0; i--)
+    for(int i = (int)explosionList.size()-1; i>=0; i--)
     {
         std::shared_ptr<TItemRec> ExpRec(explosionList[i]);
         ExpRec->directionIdx++;
@@ -1060,6 +1059,18 @@ void UpdateGame()
             explosionList.erase (explosionList.begin()+i);
         }
     }
+}
+
+/****************************************************************************
+* Summary: Update all game objects.
+****************************************************************************/
+void UpdateGame()
+{
+    char s[20];
+    //bool done;
+
+    move_bullets();
+    animate_explosions();
 
     blueCount = 0;
     redCount = 0;

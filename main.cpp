@@ -18,7 +18,7 @@
  *
  *****************************************************************************/
 
- #include <SDL2/SDL.h>
+#include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_mixer.h>
 #include <iostream>
@@ -44,7 +44,7 @@ const int FRAME_DELAY = 1000/FPS;
 //const int FRAME_DELAY = 1000;
 
 int width = WINDOW_WIDTH;
-int height = WINDOW_HEIGHT;
+int height = WINDOW_HEIGHT - 40; // Leave space for score display
 SDL_Texture *blueTanks;
 SDL_Texture *redTanks;
 SDL_Texture *deadTanks;
@@ -83,9 +83,9 @@ SDL_Renderer* renderer = nullptr;
 
 enum GameStates {ePlaying, eDrawMenu, eDoMenu,  eQuit} gameState;
 
-DrawText *drawText;
 double score = 0;
 bool done = false;
+std::unique_ptr<DrawText> drawText;
 
 void InitGame();
 void ClearScreen();
@@ -116,9 +116,6 @@ void badGuyRoutine(int tankIdx);
 void PaintGame();
 void ShowScore();
 
-/*************************************************************************************************
- * Main game entry point
- ************************************************************************************************/
 
 /*******************************************************************************
 *
@@ -135,8 +132,12 @@ void FreeResources()
     popSound = NULL;
 } // FreeResources
 
+/*************************************************************************************************
+ * Main game entry point
+ ************************************************************************************************/
 int main(int argc, char* argv[]) {
     static int result = 0;
+    drawText = std::make_unique<DrawText>();
     // Initialize SDL
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Unable to initialize SDL: %s", SDL_GetError());
@@ -158,14 +159,6 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // char *sWin[] = {
-    //     (char *) "You have defeated the invaders!",
-    //     nullptr, (char *) "Play again? (Y/N)", nullptr
-    // };
-    // char *sLost[] = {
-    //     (char *) "Your tank has been destroyed.",
-    //     (char *) "Play again? (Y/N)", nullptr
-    // };
     std::string strWinner = "You have defeated the invaders!\n\n";
     std::string strLost = "Your tank has been destroyed.\n\n";
     std::string strAgain =  "Play again? (Y/N)";
@@ -392,14 +385,14 @@ void InitScrn1()
 
     blocksList.clear();
     do{
-        ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+        ptRec = std::make_shared<TItemRec>();
         ptRec->x = i;
         ptRec->y = 0;
         ptRec->screen = scrNo;
         blocksList.push_back(ptRec);
         if((i < gate_x1) ||(i >= gate_x2))
         {
-            ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+            ptRec = std::make_shared<TItemRec>();
             ptRec->x = i;
             ptRec->y = height - h;
             ptRec->screen = scrNo;
@@ -410,14 +403,14 @@ void InitScrn1()
 
     i = 0;
     do{
-        ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+        ptRec = std::make_shared<TItemRec>();
         ptRec->x = 0;
         ptRec->y = i;
         ptRec->screen = scrNo;
         blocksList.push_back(ptRec);
         if((i < gate_y1) || (i >= gate_y2))
         {
-            ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+            ptRec = std::make_shared<TItemRec>();
             ptRec->x = width - w;
             ptRec->y = i;
             ptRec->screen = scrNo;
@@ -431,13 +424,13 @@ void InitScrn1()
     for(i = 0; i < boxW; i++)
     {
         //top
-        ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+        ptRec = std::make_shared<TItemRec>();
         ptRec->x = x;
         ptRec->y = y;
         ptRec->screen = scrNo;
         blocksList.push_back(ptRec);
         // bottom
-        ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+        ptRec = std::make_shared<TItemRec>();
         ptRec->x = x;
         ptRec->y = boxTop + (boxH * h);
         ptRec->screen = scrNo;
@@ -445,7 +438,7 @@ void InitScrn1()
         x = x + w;
     } // next i
 
-    TnkPtr = std::shared_ptr<TItemRec>(new TItemRec);
+    TnkPtr = std::make_shared<TItemRec>();
     TnkPtr->directionIdx = 4;
     TnkPtr->color = BlueTank; // Good guy
     TnkPtr->x = 20;
@@ -453,7 +446,7 @@ void InitScrn1()
     TnkPtr->screen = scrNo;
     tanksList.push_back(TnkPtr);
 
-    TnkPtr = std::shared_ptr<TItemRec>(new TItemRec);
+    TnkPtr = std::make_shared<TItemRec>();
     TnkPtr->directionIdx = 4;
     TnkPtr->color = RedTank; // Bad guy
     TnkPtr->x = 150;
@@ -461,7 +454,7 @@ void InitScrn1()
     TnkPtr->screen = scrNo;
     tanksList.push_back(TnkPtr);
 
-    TnkPtr = std::shared_ptr<TItemRec>(new TItemRec);
+    TnkPtr = std::make_shared<TItemRec>();
     TnkPtr->directionIdx = 2;
     TnkPtr->color = RedTank; // Bad guy
     TnkPtr->x = 160;
@@ -469,19 +462,19 @@ void InitScrn1()
     TnkPtr->screen = scrNo;
     tanksList.push_back(TnkPtr);
 
-    ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+    ptRec = std::make_shared<TItemRec>();
     ptRec->x = (width / 2) - 140;
     ptRec->y = height / 2;
     ptRec->screen = scrNo;
     treeList.push_back(ptRec);
 
-    ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+    ptRec = std::make_shared<TItemRec>();
     ptRec->x = (width / 2) - 60;
     ptRec->y = (height / 2) + 110;
     ptRec->screen = scrNo;
     treeList.push_back(ptRec);
 
-    ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+    ptRec = std::make_shared<TItemRec>();
     ptRec->x = (width / 2) - 50;
     ptRec->y = (height / 2) - 220;
     ptRec->screen = scrNo;
@@ -519,14 +512,14 @@ void InitScrn2()
 
     int i = w;
     do{
-        ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+        ptRec = std::make_shared<TItemRec>();
         ptRec->x = i;
         ptRec->y = 0;
         ptRec->screen = scrNo;
         blocksList.push_back(ptRec);
         if((i < gate_x1) ||(i >= gate_x2))
         {
-            ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+            ptRec = std::make_shared<TItemRec>();
             ptRec->x = i;
             ptRec->y = height - h;
             ptRec->screen = scrNo;
@@ -537,14 +530,14 @@ void InitScrn2()
 
     i = 0;
     do{
-        ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+        ptRec = std::make_shared<TItemRec>();
         ptRec->x = width - w;
         ptRec->y = i;
         ptRec->screen = scrNo;
         blocksList.push_back(ptRec);
         if((i < gate_y1) || (i >= gate_y2))
         {
-            ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+            ptRec = std::make_shared<TItemRec>();
             ptRec->x = 0;
             ptRec->y = i;
             ptRec->screen = scrNo;
@@ -558,13 +551,13 @@ void InitScrn2()
     for(i = 0; i < boxW; i++)
     {
         //top
-        ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+        ptRec = std::make_shared<TItemRec>();
         ptRec->x = x;
         ptRec->y = y;
         ptRec->screen = scrNo;
         blocksList.push_back(ptRec);
         // bottom
-        ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+        ptRec = std::make_shared<TItemRec>();
         ptRec->x = x + (boxW * w);
         ptRec->y = y;
         ptRec->screen = scrNo;
@@ -572,7 +565,7 @@ void InitScrn2()
         y = y + h;
     } // next i
 
-    TnkPtr = std::shared_ptr<TItemRec>(new TItemRec);
+    TnkPtr = std::make_shared<TItemRec>();
     TnkPtr->directionIdx = 4;
     TnkPtr->color = RedTank; // Bad guy
     TnkPtr->x = width - 40;
@@ -580,7 +573,7 @@ void InitScrn2()
     TnkPtr->screen = scrNo;
     tanksList.push_back(TnkPtr);
 
-    TnkPtr = std::shared_ptr<TItemRec>(new TItemRec);
+    TnkPtr = std::make_shared<TItemRec>();
     TnkPtr->directionIdx = 2;
     TnkPtr->color = RedTank; // Bad guy
     TnkPtr->x = 160;
@@ -588,37 +581,37 @@ void InitScrn2()
     TnkPtr->screen = scrNo;
     tanksList.push_back(TnkPtr);
 
-    ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+    ptRec = std::make_shared<TItemRec>();
     ptRec->x = (width / 2) - 40;
     ptRec->y = height / 2;
     ptRec->screen = scrNo;
     treeList.push_back(ptRec);
 
-    ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+    ptRec = std::make_shared<TItemRec>();
     ptRec->x = (width / 2) - 60;
     ptRec->y = (height / 2) + 10;
     ptRec->screen = scrNo;
     treeList.push_back(ptRec);
 
-    ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+    ptRec = std::make_shared<TItemRec>();
     ptRec->x = (width / 2) - 50;
     ptRec->y = (height / 2) + 15;
     ptRec->screen = scrNo;
     treeList.push_back(ptRec);
 
-    ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+    ptRec = std::make_shared<TItemRec>();
     ptRec->x = (width / 4) - 20;
     ptRec->y = (height / 4) + 20;
     ptRec->screen = scrNo;
     treeList.push_back(ptRec);
 
-    ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+    ptRec = std::make_shared<TItemRec>();
     ptRec->x = (width / 3) - 60;
     ptRec->y = (height / 4) + 10;
     ptRec->screen = scrNo;
     treeList.push_back(ptRec);
 
-    ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+    ptRec = std::make_shared<TItemRec>();
     ptRec->x = (width / 3) - 50;
     ptRec->y = (height / 4) + 15;
     ptRec->screen = scrNo;
@@ -657,14 +650,14 @@ void InitScrn3()
 
     int i = w;
     do{
-        ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+        ptRec = std::make_shared<TItemRec>();
         ptRec->x = i;
         ptRec->y = height - h;
         ptRec->screen = scrNo;
         blocksList.push_back(ptRec);
         if((i < gate_x1) ||(i >= gate_x2))
         {
-            ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+            ptRec = std::make_shared<TItemRec>();
             ptRec->x = i;
             ptRec->y = 0;
             ptRec->screen = scrNo;
@@ -675,14 +668,14 @@ void InitScrn3()
 
     i = 0;
     do{
-        ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+        ptRec = std::make_shared<TItemRec>();
         ptRec->x = 0;
         ptRec->y = i;
         ptRec->screen = scrNo;
         blocksList.push_back(ptRec);
         if((i < gate_y1) || (i >= gate_y2))
         {
-            ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+            ptRec = std::make_shared<TItemRec>();
             ptRec->x = width - w;
             ptRec->y = i;
             ptRec->screen = scrNo;
@@ -696,13 +689,13 @@ void InitScrn3()
     for(i = 0; i < boxW; i++)
     {
         //top
-        ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+        ptRec = std::make_shared<TItemRec>();
         ptRec->x = x;
         ptRec->y = y;
         ptRec->screen = scrNo;
         blocksList.push_back(ptRec);
         // bottom
-        ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+        ptRec = std::make_shared<TItemRec>();
         ptRec->x = x + (boxW * w);
         ptRec->y = y;
         ptRec->screen = scrNo;
@@ -710,7 +703,7 @@ void InitScrn3()
         y = y + h;
     } // next i
 
-    TnkPtr = std::shared_ptr<TItemRec>(new TItemRec);
+    TnkPtr = std::make_shared<TItemRec>();
     TnkPtr->directionIdx = 4;
     TnkPtr->color = RedTank; // Bad guy
     TnkPtr->x = width - 40;
@@ -718,7 +711,7 @@ void InitScrn3()
     TnkPtr->screen = scrNo;
     tanksList.push_back(TnkPtr);
 
-    TnkPtr = std::shared_ptr<TItemRec>(new TItemRec);
+    TnkPtr = std::make_shared<TItemRec>();
     TnkPtr->directionIdx = 2;
     TnkPtr->color = RedTank; // Bad guy
     TnkPtr->x = 160;
@@ -726,37 +719,37 @@ void InitScrn3()
     TnkPtr->screen = scrNo;
     tanksList.push_back(TnkPtr);
 
-    ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+    ptRec = std::make_shared<TItemRec>();
     ptRec->x = (width / 2) - 45;
     ptRec->y = (height / 2) - 10;
     ptRec->screen = scrNo;
     treeList.push_back(ptRec);
 
-    ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+    ptRec = std::make_shared<TItemRec>();
     ptRec->x = (width / 2) - 60;
     ptRec->y = (height / 2) + 10;
     ptRec->screen = scrNo;
     treeList.push_back(ptRec);
 
-    ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+    ptRec = std::make_shared<TItemRec>();
     ptRec->x = (width / 2) - 50;
     ptRec->y = (height / 2) + 15;
     ptRec->screen = scrNo;
     treeList.push_back(ptRec);
 
-    ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+    ptRec = std::make_shared<TItemRec>();
     ptRec->x = (width / 4) - 20;
     ptRec->y = (height / 4) + 20;
     ptRec->screen = scrNo;
     treeList.push_back(ptRec);
 
-    ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+    ptRec = std::make_shared<TItemRec>();
     ptRec->x = (width / 3) - 60;
     ptRec->y = (height / 4) + 10;
     ptRec->screen = scrNo;
     treeList.push_back(ptRec);
 
-    ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+    ptRec = std::make_shared<TItemRec>();
     ptRec->x = (width / 3) - 50;
     ptRec->y = (height / 4) + 15;
     ptRec->screen = scrNo;
@@ -795,14 +788,14 @@ void InitScrn4()
 
     int i = w;
     do{
-        ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+        ptRec = std::make_shared<TItemRec>();
         ptRec->x = i;
         ptRec->y = height - h;
         ptRec->screen = scrNo;
         blocksList.push_back(ptRec);
         if((i < gate_x1) ||(i >= gate_x2))
         {
-            ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+            ptRec = std::make_shared<TItemRec>();
             ptRec->x = i;
             ptRec->y = 0;
             ptRec->screen = scrNo;
@@ -813,14 +806,14 @@ void InitScrn4()
 
     i = 0;
     do{
-        ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+        ptRec = std::make_shared<TItemRec>();
         ptRec->x = width - w;
         ptRec->y = i;
         ptRec->screen = scrNo;
         blocksList.push_back(ptRec);
         if((i < gate_y1) || (i >= gate_y2))
         {
-            ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+            ptRec = std::make_shared<TItemRec>();
             ptRec->x = 0;
             ptRec->y = i;
             ptRec->screen = scrNo;
@@ -834,13 +827,13 @@ void InitScrn4()
     for(i = 0; i < boxW; i++)
     {
         //top
-        ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+        ptRec = std::make_shared<TItemRec>();
         ptRec->x = x;
         ptRec->y = y;
         ptRec->screen = scrNo;
         blocksList.push_back(ptRec);
         // bottom
-        ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+        ptRec = std::make_shared<TItemRec>();
         ptRec->x = x;
         ptRec->y = boxTop + (boxH * h);;
         ptRec->screen = scrNo;
@@ -852,7 +845,7 @@ void InitScrn4()
     for(i = 0; i < boxH; i++)
     {
         //top
-        ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+        ptRec = std::make_shared<TItemRec>();
         ptRec->x = x;
         ptRec->y = y;
         ptRec->screen = scrNo;
@@ -860,7 +853,7 @@ void InitScrn4()
         y = y + h;
     } // next i
 
-    TnkPtr = std::shared_ptr<TItemRec>(new TItemRec);
+    TnkPtr = std::make_shared<TItemRec>();
     TnkPtr->directionIdx = 4;
     TnkPtr->color = RedTank; // Bad guy
     TnkPtr->x = width - 40;
@@ -868,7 +861,7 @@ void InitScrn4()
     TnkPtr->screen = scrNo;
     tanksList.push_back(TnkPtr);
 
-    TnkPtr = std::shared_ptr<TItemRec>(new TItemRec);
+    TnkPtr = std::make_shared<TItemRec>();
     TnkPtr->directionIdx = 2;
     TnkPtr->color = RedTank; // Bad guy
     TnkPtr->x = 160;
@@ -876,37 +869,37 @@ void InitScrn4()
     TnkPtr->screen = scrNo;
     tanksList.push_back(TnkPtr);
 
-    ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+    ptRec = std::make_shared<TItemRec>();
     ptRec->x = (width / 2) - 45;
     ptRec->y = (height / 2) - 10;
     ptRec->screen = scrNo;
     treeList.push_back(ptRec);
 
-    ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+    ptRec = std::make_shared<TItemRec>();
     ptRec->x = (width / 2) - 60;
     ptRec->y = (height / 2) + 10;
     ptRec->screen = scrNo;
     treeList.push_back(ptRec);
 
-    ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+    ptRec = std::make_shared<TItemRec>();
     ptRec->x = (width / 2) - 50;
     ptRec->y = (height / 2) + 15;
     ptRec->screen = scrNo;
     treeList.push_back(ptRec);
 
-    ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+    ptRec = std::make_shared<TItemRec>();
     ptRec->x = (width / 4) - 20;
     ptRec->y = (height / 4) + 20;
     ptRec->screen = scrNo;
     treeList.push_back(ptRec);
 
-    ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+    ptRec = std::make_shared<TItemRec>();
     ptRec->x = (width / 3) - 60;
     ptRec->y = (height / 4) + 10;
     ptRec->screen = scrNo;
     treeList.push_back(ptRec);
 
-    ptRec = std::shared_ptr<TItemRec>(new TItemRec);
+    ptRec = std::make_shared<TItemRec>();
     ptRec->x = (width / 3) - 50;
     ptRec->y = (height / 4) + 15;
     ptRec->screen = scrNo;
@@ -1245,10 +1238,7 @@ void NewScreenCheck(int tankIdx)
             thruDoor = true;
         }
         else if(tnkPtr->y < 4)
-        {    // Free the pop sound
-    Mix_FreeChunk(popSound);
-    popSound = NULL;
-
+        {
             tnkPtr->screen = 1;
             tnkPtr->y = MaxY - (tankHeight + 1);
             thruDoor = true;
@@ -1639,12 +1629,12 @@ void PaintGame()
 
 void ShowScore()
 {
-//    char s[20];
-//    sprintf(s, "Score: %4.1f", score);
-//    int x= width - 150;
-//    int y= height- 80;
-//
-//    drawText->printText(renderer, s, x, y);
+    char s[20];
+    sprintf(s, "Score: %4.1f", score);
+    int x= width - 150;
+    int y= height +1;
+
+    drawText->printText(renderer, s, x, y);
 }
 
 /*******************************************************************************

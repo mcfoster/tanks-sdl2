@@ -140,7 +140,8 @@ int main(int argc, char* argv[]) {
     drawText = std::make_unique<DrawText>();
     // Initialize SDL
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Unable to initialize SDL: %s", SDL_GetError());
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+            "Unable to initialize SDL: %s", SDL_GetError());
         return 1;
     }
 
@@ -150,11 +151,12 @@ int main(int argc, char* argv[]) {
     }
 
     // Create a window
-    SDL_Window* window = SDL_CreateWindow("My SDL Game",
+    SDL_Window* window = SDL_CreateWindow("Tank Invasion",
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
         WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_SHOWN);
     if (window == nullptr) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Unable to create window: %s", SDL_GetError());
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+            "Unable to create window: %s", SDL_GetError());
         SDL_Quit();
         return 1;
     }

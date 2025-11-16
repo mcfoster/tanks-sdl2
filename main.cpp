@@ -11,10 +11,11 @@
  *   the Free Software Foundation, either version 3 of the License, or
  *   (at your option) any later version.
  *   tanks_sdl2 is distributed in the hope that it will be useful,
- *   All rights reserved.
+ *
  * Revision history:
- * Date      Author          Description
- * --------  --------------- -------------------------------------------------
+ * Date       Author          Description
+ * ---------- --------------- -----------------------------------------------
+ * 11/14/2025 MCF             Fixed header comments.
  *
  *****************************************************************************/
 
